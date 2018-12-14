@@ -1,57 +1,65 @@
+const Sequelize = require('sequelize')
+const defineTable = require('../mysql/defineTable.js')
+let obj = {
+    name: Sequelize.STRING(100),
+    gender: Sequelize.BOOLEAN,
+    birth: Sequelize.STRING(10),
+    createdAt: Sequelize.BIGINT,
+    updatedAt: Sequelize.BIGINT,
+    version: Sequelize.BIGINT
+}
+let Pet = defineTable('pets', obj)
+var now = Date.now()
 let fn_index = async (ctx, next) => {
-    ctx.response.body = 'open success'
-}
-let fn_signin = async (ctx, next) => {
-    if (ctx.request.body.name === '123' && ctx.request.body.password === '456') {
-        ctx.response.body = { msg: 'login successd' }
-    } else {
-        ctx.response.body = { msg: 'login failed' }
-    }
-}
-let checkList = async (ctx, next) => {
-    ctx.response.body = {
-        content: [
-            { tradeMonth: 1, outfit: 'a', totalNum: 1, totalMoney: 590, wechatTotalNum: 2, wechatTotalMoney:2, alipaytotalNum: 100, alipaytotalMoney: 100, moneyTax: 10000},
-            { tradeMonth: 2, outfit: 'b', totalNum: 1, totalMoney: 590, wechatTotalNum: 2, wechatTotalMoney:2, alipaytotalNum: 100, alipaytotalMoney: 100, moneyTax: 10000},
-            { tradeMonth: 3, outfit: 'c', totalNum: 1, totalMoney: 590, wechatTotalNum: 2, wechatTotalMoney:2, alipaytotalNum: 100, alipaytotalMoney: 100, moneyTax: 10000},
-            { tradeMonth: 4, outfit: 'd', totalNum: 1, totalMoney: 590, wechatTotalNum: 2, wechatTotalMoney:2, alipaytotalNum: 100, alipaytotalMoney: 100, moneyTax: 10000}
-        ],
-        firstPage: null,
-        ignoreFields: null,
-        lastPage: null,
-        number: 0,
-        numberOfElements: null,
-        size: 10,
-        sort: null,
-        statDataMap: null,
-        totalElements: 31807,
-        totalPages: 3181
-    }
-}
-let getOutfit = async (ctx, next) => { 
-    ctx.response.body = {
-        returnCode: '0',
-        data: {
-            content:[
-                {name: '代理机构1', value: '1'},
-                {name: '代理机构2', value: '2'},
-                {name: '代理机构3', value: '3'},
-                {name: '代理机构4', value: '4'}
-            ]
-        }
-    } 
+    console.log(ctx.request.query) // get请求 参数
+    ctx.response.body = `
+        <h1>Index</h1>
+        <form action="/eons/postdata1" method="post">
+            <p>文字: <input name="value" value="koa"></p>
+            <p><input type="submit" value="提交"></p>
+        </form>`
 }
 
-let downLoad = async (ctx, next) => { 
+let testDatabase = async (ctx, next) => {
+    let data = await Pet.findAll({ where: { }}) // 修改 || 删除
+    ctx.response.body = data
+}
+
+let getProfitListByMonth = async (ctx, next) => { // 月度分润
+    let page = ctx.request.query.page
+    let size = ctx.request.query.size
+    let data = []
+    for(let i=0;i < 100; i ++) {
+        data.push(
+            {
+                "id":i,
+                "tradeMonth":"2018-09",
+                "brhCode":"022001",
+                "brhName":"这是机构名称捏" + i,
+                "addMchtNum":1 + i,
+                "cartTradeNum":200 + i,
+                "cartTradeAmt":12123.12,
+                "notCartTradeNum":300,
+                "notCartTradeAmt":121445.23,
+                "profitSumPreTax":12132.22
+            })
+    } 
     ctx.response.body = {
-        returnCode: '0',
-        msg: '成功'
+        "returnCode": "0",
+        "errorInfo": "这是错误信息",
+        "result": {
+            "page": page,
+            "size": size,
+            "totalPages": Math.ceil(data.length/size),
+            "totalElements": data.length,
+            "data":data.slice((page-1)*size, page*size)
+        }
     }
 }
+
+
 module.exports = {
-    'GET /eons/xixi': fn_index,
-    'POST /eons/postdata': fn_signin,
-    'GET /eons/api/checkList': checkList, // 获取列表
-    'POST /eons/api/getOutfit': getOutfit, // 所属机构
-    'POST /eons/api/downLoad': downLoad // 下载
+    'fn_index': {fun: fn_index, methods: 'GET', url: '/eons/xixi'},
+    'testDatabase': {fun: testDatabase, methods: 'POST', url: '/eons/postdata'},
+    'getProfitListByMonth': {fun: getProfitListByMonth, methods: 'GET', url: '/city/v1/getProfitListByMonth'}
 }
